@@ -1,16 +1,25 @@
-import { useState } from "react";
-import {Routes, Route} from "react-router";
+import { useState , useEffect} from "react";
+import {Routes, Route , Navigate} from "react-router";
 import HomePage from "./Pages/HomePage.jsx";
 import LoginPage from "./Pages/LoginPage.jsx";
 import RegisterPage from "./Pages/RegisterPage.jsx";
+import {authenticateUser} from "../src/authSlice.js";
+import { useDispatch, useSelector } from "react-redux";
 
 function App(){
+  const {isAuthenticate}=useSelector((state)=>state.auth);
+  const dispatch=useDispatch();
+
+  useEffect(()=>{
+    dispatch(authenticateUser());
+  },[])
+
     return(
       <>
       <Routes>
-        <Route path="/" element={<HomePage/>}></Route>
-        <Route path="/login" element={<LoginPage/>}></Route>
-        <Route path="/register" element={<RegisterPage/>}></Route>
+        <Route path="/" element={isAuthenticate?<HomePage/>:<Navigate to={"/register"}/>}></Route>
+        <Route path="/login" element={isAuthenticate?<Navigate to={"/"}/>:<LoginPage></LoginPage>}></Route>
+        <Route path="/register" element={isAuthenticate?<Navigate to={"/"}/>:<RegisterPage></RegisterPage>}></Route>
       </Routes>
       </>
     )

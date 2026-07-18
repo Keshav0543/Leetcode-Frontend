@@ -1,7 +1,10 @@
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "react-router";
+import { Link , useNavigate} from "react-router";
+import { useDispatch , useSelector} from "react-redux";
+import {registerUser} from "../authSlice.js";
 
 //SchemaValidation For signupform
 const Signupschema = z.object({
@@ -15,6 +18,7 @@ const Signupschema = z.object({
   password: z.string().min(8, "Password is to weak..."),
 });
 
+
 function RegisterPage() {
   const {
     register,
@@ -23,6 +27,17 @@ function RegisterPage() {
   } = useForm({
     resolver: zodResolver(Signupschema),
   });
+  const navigate=useNavigate();
+  const {isAuthenticate}=useSelector((state)=>state.auth);
+
+  useEffect(()=>{
+    if(isAuthenticate)navigate("/");
+  },[isAuthenticate]);
+
+  const dispatch=useDispatch();
+  const onSubmit=(data)=>{
+  dispatch(registerUser(data));
+  };
 
   return (
     <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
@@ -37,7 +52,7 @@ function RegisterPage() {
           </p>
 
           <form
-            onSubmit={handleSubmit((data) => console.log(data))}
+            onSubmit={handleSubmit(onSubmit)}
             className="space-y-5"
           >
             {/* Name */}

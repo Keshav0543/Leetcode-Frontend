@@ -119,7 +119,7 @@ const authSlice=createSlice({
         .addCase(logoutUser.fulfilled ,(state)=>{
             state.isAuthenticate=false,
             state.loading=false,
-            state.user=nul
+            state.user=null
         })
         .addCase(logoutUser.rejected , (state,action)=>{
             state.error=action.payload?.message || "Something went wrong...",
@@ -130,4 +130,5 @@ const authSlice=createSlice({
     }
 });
 
+export {authenticateUser,registerUser,loginUser,logoutUser};
 export default authSlice.reducer;
