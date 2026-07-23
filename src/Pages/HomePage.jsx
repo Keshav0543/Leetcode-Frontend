@@ -7,8 +7,6 @@ function HomePage() {
   const [Allproblem, setAllproblem] = useState([]);
   const [userProb, setuserProb] = useState([]);
 
-    console.log(Allproblem);
-    console.log(userProb);
   const [filters, setfilters] = useState({
     difficulty: "all",
     tag: "all",
@@ -207,9 +205,9 @@ function HomePage() {
                         <span
                           className={`badge
                                         ${
-                                          problem.difficulty === "Easy"
+                                          problem.difficulty === "easy"
                                             ? "badge-success"
-                                            : problem.difficulty === "Medium"
+                                            : problem.difficulty === "medium"
                                               ? "badge-warning"
                                               : "badge-error"
                                         }`}
