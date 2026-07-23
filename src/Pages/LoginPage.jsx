@@ -1,11 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link , useNavigate} from "react-router";
 import { Mail, Lock, LogIn } from "lucide-react";
 import { useSelector , useDispatch} from "react-redux";
-import loginUser from "../authSlice.js";
+import {loginUser} from "../authSlice.js";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 // Schema Validation
 const LoginSchema = z.object({
@@ -15,6 +16,7 @@ const LoginSchema = z.object({
 
 
 function LoginPage() {
+  const [showPassword, setshowPassword]=useState(false);
   const {
     register,
     handleSubmit,
@@ -25,7 +27,7 @@ function LoginPage() {
 
   const dispatch=useDispatch();
   const navigate=useNavigate();
-  const {isAuthenticate}=useSelector((state)=>state.auth);
+  const {isAuthenticate , loading}=useSelector((state)=>state.auth);
 
   useEffect(()=>{
     if(isAuthenticate)navigate("/");
@@ -91,25 +93,28 @@ function LoginPage() {
             </div>
 
             {/* Password */}
-            <div>
+             <div>
               <label className="label">
                 <span className="label-text font-medium">Password</span>
               </label>
 
               <div className="relative">
-                <Lock
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/60"
-                />
-
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className={`input input-bordered w-full pl-11 ${
+                  className={`input input-bordered w-full pr-12 ${
                     errors.password ? "input-error" : ""
                   }`}
                   {...register("password")}
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setshowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
 
               {errors.password && (
@@ -141,8 +146,9 @@ function LoginPage() {
             <button
               type="submit"
               className="btn btn-primary w-full mt-2"
+              disabled={loading}
             >
-              Login
+             {loading? "wait": "Login"}
             </button>
           </form>
 

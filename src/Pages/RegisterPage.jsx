@@ -1,25 +1,33 @@
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link , useNavigate} from "react-router";
-import { useDispatch , useSelector} from "react-redux";
-import {registerUser} from "../authSlice.js";
+import { Link, useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import { registerUser } from "../authSlice.js";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 //SchemaValidation For signupform
-const Signupschema = z.object({
-  firstName: z
-    .string()
-    .min(
-      3,
-      "Name should contain atleast 3 character and maximum 10 character...",
-    ),
-  emailId: z.email("Invalid Email..."),
-  password: z.string().min(8, "Password is to weak..."),
-});
-
+const Signupschema = z
+  .object({
+    firstName: z
+      .string()
+      .min(
+        3,
+        "Name should contain atleast 3 character and maximum 10 character...",
+      ),
+    emailId: z.email("Invalid Email..."),
+    password: z.string().min(8, "Password is to weak..."),
+    confirmPassword: z.string().min(8, "Password is to weak..."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 function RegisterPage() {
+  const [showPassword, setshowPassword] = useState(false);
+  const [showconfirmPassword, setshowconfirmPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -27,16 +35,16 @@ function RegisterPage() {
   } = useForm({
     resolver: zodResolver(Signupschema),
   });
-  const navigate=useNavigate();
-  const {isAuthenticate}=useSelector((state)=>state.auth);
+  const navigate = useNavigate();
+  const { isAuthenticate , loading} = useSelector((state) => state.auth);
 
-  useEffect(()=>{
-    if(isAuthenticate)navigate("/");
-  },[isAuthenticate]);
+  useEffect(() => {
+    if (isAuthenticate) navigate("/");
+  }, [isAuthenticate]);
 
-  const dispatch=useDispatch();
-  const onSubmit=(data)=>{
-  dispatch(registerUser(data));
+  const dispatch = useDispatch();
+  const onSubmit = (data) => {
+    dispatch(registerUser(data));
   };
 
   return (
@@ -51,10 +59,7 @@ function RegisterPage() {
             Start your coding journey 🚀
           </p>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Name */}
             <div>
               <label className="label">
@@ -105,14 +110,24 @@ function RegisterPage() {
                 <span className="label-text font-medium">Password</span>
               </label>
 
-              <input
-                type="password"
-                placeholder="Enter your password"
-                className={`input input-bordered w-full ${
-                  errors.password ? "input-error" : ""
-                }`}
-                {...register("password")}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className={`input input-bordered w-full pr-12 ${
+                    errors.password ? "input-error" : ""
+                  }`}
+                  {...register("password")}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setshowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
 
               {errors.password && (
                 <p className="text-error text-sm mt-1">
@@ -120,9 +135,41 @@ function RegisterPage() {
                 </p>
               )}
             </div>
+            
+            {/* confirmPassword */}
+            <div>
+              <label className="label">
+                <span className="label-text font-medium">confirmPassword</span>
+              </label>
 
-            <button type="submit" className="btn btn-primary w-full mt-2">
-              Register
+              <div className="relative">
+                <input
+                  type={showconfirmPassword ? "text" : "password"}
+                  placeholder="ReEnter Password"
+                  className={`input input-bordered w-full pr-12 ${
+                    errors.confirmPassword ? "input-error" : ""
+                  }`}
+                  {...register("confirmPassword")}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setshowconfirmPassword(!showconfirmPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center"
+                >
+                  {showconfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+
+              {errors.confirmpassword && (
+                <p className="text-error text-sm mt-1">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
+            <button type="submit" className="btn btn-primary w-full mt-2" disabled={loading}>
+              {loading ? "registering....": "register"}
             </button>
           </form>
 

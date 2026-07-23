@@ -22,7 +22,7 @@ const loginUser=createAsyncThunk(
         return response.data.result;
         }
         catch(err){
-            return rejectWithValue(err);
+            return rejectWithValue(err.response.data);
         }
     }
 );
