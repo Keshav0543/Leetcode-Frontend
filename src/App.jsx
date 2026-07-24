@@ -7,12 +7,18 @@ import {authenticateUser} from "../src/authSlice.js";
 import { useDispatch, useSelector } from "react-redux";
 
 function App(){
-  const {isAuthenticate}=useSelector((state)=>state.auth);
+  const {isAuthenticate, loading, user}=useSelector((state)=>state.auth);
   const dispatch=useDispatch();
 
   useEffect(()=>{
     dispatch(authenticateUser());
   },[])
+
+  if(loading){
+    return <div className="min-h-screen flex items-center justify-center">
+      <span className="loading loading-spinner loading-lg"></span>
+    </div>
+  }
 
     return(
       <>

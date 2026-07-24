@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import axiosClient from "../utils/axiosClient";
-import { useSelector } from "react-redux";
+import { useSelector , useDispatch} from "react-redux";
 import { Search, Code2, UserCircle2 } from "lucide-react";
+import  {logoutUser} from "../authSlice.js";
 
 function HomePage() {
   const [Allproblem, setAllproblem] = useState([]);
@@ -14,6 +15,7 @@ function HomePage() {
   });
 
   const { user } = useSelector((state) => state.auth);
+  const dispatch=useDispatch();
 
   useEffect(() => {
     const fetchdata = async () => {
@@ -48,6 +50,15 @@ function HomePage() {
 
     return difficultyMatch && tagMatch && statusMatch;
   });
+
+  async function logoutFunction(){
+    try{
+      await dispatch(logoutUser()).unwrap();
+    }
+    catch(error){
+      console.log("Error: ",error);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -84,7 +95,7 @@ function HomePage() {
               </li>
 
               <li>
-                <a>Logout</a>
+                <a onClick={logoutFunction}>Logout</a>
               </li>
             </ul>
           </div>
@@ -205,14 +216,14 @@ function HomePage() {
                         <span
                           className={`badge
                                         ${
-                                          problem.difficulty === "easy"
+                                          problem.difficultylevel === "easy"
                                             ? "badge-success"
-                                            : problem.difficulty === "medium"
+                                            : problem.difficultylevel === "medium"
                                               ? "badge-warning"
                                               : "badge-error"
                                         }`}
                         >
-                          {problem.difficulty}
+                          {problem.difficultylevel}
                         </span>
                       </td>
 
