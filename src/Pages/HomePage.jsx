@@ -140,10 +140,10 @@ function HomePage() {
             >
               <option value="all">Tags</option>
               <option value="array">Array</option>
-              <option value="DP">DP</option>
-              <option value="Graph">Graph</option>
-              <option value="Tree">Tree</option>
-              <option value="String">String</option>
+              <option value="dp">DP</option>
+              <option value="graph">Graph</option>
+              <option value="tree">Tree</option>
+              <option value="string">String</option>
             </select>
 
             {/* Status */}

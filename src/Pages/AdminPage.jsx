@@ -97,11 +97,13 @@ const {
   control,
   name: "invisibleTestcases",
 });
+  const navigate=useNavigate();
 
   const onSubmit= async (data)=>{
     try{
       await axiosClient.post("/user/create",data);
       alert("Problem created Successfully...");
+      navigate("/");
     }
     catch(error){
       alert(`Error: ${error.response?.data} || error.message`);
