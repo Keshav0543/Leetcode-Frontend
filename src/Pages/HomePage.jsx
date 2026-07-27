@@ -1,12 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import axiosClient from "../utils/axiosClient";
-import { useSelector , useDispatch} from "react-redux";
-import { Search, Code2, UserCircle2 } from "lucide-react";
-import  {logoutUser} from "../authSlice.js";
+import { useSelector, useDispatch } from "react-redux";
+import { Search, Code2, UserCircle2, X } from "lucide-react";
+import { logoutUser } from "../authSlice.js";
+import debounce from "lodash/debounce";
 
 function HomePage() {
   const [Allproblem, setAllproblem] = useState([]);
   const [userProb, setuserProb] = useState([]);
+  const [query, setquery] = useState("");
+  const [resultQuery, setresultQuery] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
 
   const [filters, setfilters] = useState({
     difficulty: "all",
@@ -15,7 +20,7 @@ function HomePage() {
   });
 
   const { user } = useSelector((state) => state.auth);
-  const dispatch=useDispatch();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchdata = async () => {
@@ -37,7 +42,8 @@ function HomePage() {
 
   const filteredProblems = Allproblem.filter((problem) => {
     const difficultyMatch =
-      filters.difficulty === "all" || problem.difficultylevel.toLowerCase() === filters.difficulty.toLowerCase();
+      filters.difficulty === "all" ||
+      problem.difficultylevel.toLowerCase() === filters.difficulty.toLowerCase();
 
     const tagMatch = filters.tag === "all" || problem.tags === filters.tag;
 
@@ -47,18 +53,48 @@ function HomePage() {
         ? userProb.some((sp) => sp._id === problem._id)
         : !userProb.some((sp) => sp._id === problem._id));
 
-
     return difficultyMatch && tagMatch && statusMatch;
   });
 
-  async function logoutFunction(){
-    try{
+  async function logoutFunction() {
+    try {
       await dispatch(logoutUser()).unwrap();
-    }
-    catch(error){
-      console.log("Error: ",error);
+    } catch (error) {
+      console.log("Error: ", error);
     }
   }
+
+  const Searchquery = useMemo(() => {
+    return debounce(async (text) => {
+      if (text.trim() === "") {
+        setresultQuery([]);
+        setSearchLoading(false);
+        return;
+      }
+
+      try {
+        setSearchLoading(true);
+        const result = await axiosClient.get(`/user/search?q=${text}`);
+        setresultQuery(result.data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    Searchquery(query);
+  }, [query]);
+
+  const isSearching = query.trim() !== "";
+  const displayedProblems = isSearching ? resultQuery : filteredProblems;
+
+  const clearSearch = () => {
+    setquery("");
+    setresultQuery([]);
+  };
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -106,63 +142,98 @@ function HomePage() {
 
       <div className="max-w-7xl mx-auto mt-8">
         <div className="bg-base-100 rounded-xl shadow-md p-6">
-          <div className="flex flex-wrap justify-end gap-4">
+          <div className="flex flex-wrap justify-between gap-4">
+            {/* Search bar */}
 
-            {/* Difficulty */}
+            <div className="form-control w-full sm:max-w-xs">
+              <div className="relative">
+                <Search
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40"
+                />
+                <input
+                  type="text"
+                  placeholder="Search problems..."
+                  value={query}
+                  onChange={(e) => setquery(e.target.value)}
+                  className="input input-bordered w-full pl-10 pr-10"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
 
-            <select
-              className="select select-bordered"
-              value={filters.difficulty}
-              onChange={(e) =>
-                setfilters({
-                  ...filters,
-                  difficulty: e.target.value,
-                })
-              }
-            >
-              <option value="all">Difficulty</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+            {/* Filters */}
 
-            {/* Tag */}
+            <div className="flex flex-wrap justify-end gap-4">
+              <select
+                className="select select-bordered"
+                value={filters.difficulty}
+                disabled={isSearching}
+                onChange={(e) =>
+                  setfilters({
+                    ...filters,
+                    difficulty: e.target.value,
+                  })
+                }
+              >
+                <option value="all">Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
 
-            <select
-              className="select select-bordered"
-              value={filters.tag}
-              onChange={(e) =>
-                setfilters({
-                  ...filters,
-                  tag: e.target.value,
-                })
-              }
-            >
-              <option value="all">Tags</option>
-              <option value="array">Array</option>
-              <option value="dp">DP</option>
-              <option value="graph">Graph</option>
-              <option value="tree">Tree</option>
-              <option value="string">String</option>
-            </select>
+              <select
+                className="select select-bordered"
+                value={filters.tag}
+                disabled={isSearching}
+                onChange={(e) =>
+                  setfilters({
+                    ...filters,
+                    tag: e.target.value,
+                  })
+                }
+              >
+                <option value="all">Tags</option>
+                <option value="array">Array</option>
+                <option value="dp">DP</option>
+                <option value="graph">Graph</option>
+                <option value="tree">Tree</option>
+                <option value="string">String</option>
+              </select>
 
-            {/* Status */}
-
-            <select
-              className="select select-bordered"
-              value={filters.status}
-              onChange={(e) =>
-                setfilters({
-                  ...filters,
-                  status: e.target.value,
-                })
-              }
-            >
-              <option value="all">Status</option>
-              <option value="Solved">Solved</option>
-              <option value="UnSolved">UnSolved</option>
-            </select>
+              <select
+                className="select select-bordered"
+                value={filters.status}
+                disabled={isSearching}
+                onChange={(e) =>
+                  setfilters({
+                    ...filters,
+                    status: e.target.value,
+                  })
+                }
+              >
+                <option value="all">Status</option>
+                <option value="Solved">Solved</option>
+                <option value="UnSolved">UnSolved</option>
+              </select>
+            </div>
           </div>
+
+          {isSearching && (
+            <p className="text-sm text-base-content/60 mt-3">
+              {searchLoading
+                ? "Searching..."
+                : `${resultQuery.length} result${resultQuery.length === 1 ? "" : "s"} for "${query}"`}
+            </p>
+          )}
         </div>
       </div>
 
@@ -184,8 +255,8 @@ function HomePage() {
             </thead>
 
             <tbody>
-              {filteredProblems.length > 0 ? (
-                filteredProblems.map((problem) => {
+              {displayedProblems.length > 0 ? (
+                displayedProblems.map((problem) => {
                   const solved = userProb.some((sp) => sp._id === problem._id);
 
                   return (
@@ -196,9 +267,7 @@ function HomePage() {
                         {solved ? (
                           <span className="text-success text-xl">✔</span>
                         ) : (
-                          <span className="text-base-content/30 text-xl">
-                            ○
-                          </span>
+                          <span className="text-base-content/30 text-xl">○</span>
                         )}
                       </td>
 
@@ -238,9 +307,7 @@ function HomePage() {
                               </span>
                             ))
                           ) : (
-                            <span className="badge badge-outline">
-                              {problem.tags}
-                            </span>
+                            <span className="badge badge-outline">{problem.tags}</span>
                           )}
                         </div>
                       </td>
@@ -250,7 +317,7 @@ function HomePage() {
               ) : (
                 <tr>
                   <td colSpan="4" className="text-center py-10 text-gray-500">
-                    No Problems Found
+                    {isSearching ? "No matching problems found" : "No Problems Found"}
                   </td>
                 </tr>
               )}
