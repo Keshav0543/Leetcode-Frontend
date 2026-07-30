@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Search, Code2, UserCircle2, X } from "lucide-react";
 import { logoutUser } from "../authSlice.js";
 import debounce from "lodash/debounce";
+import {Link} from "react-router";
 
 function HomePage() {
   const [Allproblem, setAllproblem] = useState([]);
@@ -274,9 +275,11 @@ function HomePage() {
                       {/* Problem Title */}
 
                       <td>
+                        <Link to={`/problem/${problem._id}`}>
                         <div className="font-medium hover:text-primary transition">
                           {problem.title}
                         </div>
+                        </Link>
                       </td>
 
                       {/* Difficulty */}
