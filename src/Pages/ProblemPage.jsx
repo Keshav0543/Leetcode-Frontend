@@ -9,14 +9,7 @@ import ConsoleOutput from "../components/consoleOutput.jsx";
 import SubmissionTable from "../components/submissiontable.jsx";
 import axiosClient from "../utils/axiosClient.js";
 
-// ---------------------------------------------------------------------------
-// Design tokens (kept local to this page so it doesn't touch your tailwind
-// config). Palette is a GitHub-dark-adjacent "editor" theme:
-//   bg      #0B0E14   panel   #10141C   border  #1F2733
-//   text    #E6EDF3   muted   #6B7686
-//   teal    #2DD4BF (primary / run)     emerald #3FB950 (solved / easy)
-//   amber   #D29922 (medium)            red     #F85149 (hard / error)
-// ---------------------------------------------------------------------------
+
 
 const DIFFICULTY_STYLE = {
   easy: { dot: "bg-emerald-400", text: "text-emerald-400", ring: "ring-emerald-400/30" },
@@ -102,17 +95,22 @@ function ProblemPage() {
   }, [problemId]);
 
   useEffect(() => {
+    let cancelled=false;
     const fetchSolvedproblem = async () => {
       try {
         const result = await axiosClient.get("/user/ProblemSolvedByUser");
+        if(cancelled)return;
         const ans = result.data.some((k) => k._id === problemId);
-        if (ans) setsubmitted(true);
+        setsubmitted(ans);
       } catch (error) {
-        console.log("Error: ", error);
+        if(!cancelled)console.log("Error: ", error);
       }
     };
-    fetchSolvedproblem();
-  }, [problemId]);
+    if(problemId)fetchSolvedproblem();
+    return ()=>{
+      cancelled=true;
+    };
+  }, [submitResult,problemId]);
 
   const code = codeByLanguage[language] ?? "";
   const setCode = (value) =>
@@ -155,9 +153,7 @@ function ProblemPage() {
       // rather than the saved doc, so we can't show verdict/runtime here yet.
       // Once you return the saved SubmissionS doc from the controller, swap
       // this to read verdict/runtime/memory/testCasesPassed straight off it.
-      console.log(data);
       setSubmitResult(data);
-      setsubmitted(true);
       setLeftTab("submissions");
     } catch (err) {
       setActionError(err?.response?.data || err.message);

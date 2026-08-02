@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Search, Code2, UserCircle2, X } from "lucide-react";
 import { logoutUser } from "../authSlice.js";
 import debounce from "lodash/debounce";
-import {Link} from "react-router";
+import { Link } from "react-router";
 
 function HomePage() {
   const [Allproblem, setAllproblem] = useState([]);
@@ -13,7 +13,7 @@ function HomePage() {
   const [resultQuery, setresultQuery] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-
+  console.log(userProb);
   const [filters, setfilters] = useState({
     difficulty: "all",
     tag: "all",
@@ -44,7 +44,8 @@ function HomePage() {
   const filteredProblems = Allproblem.filter((problem) => {
     const difficultyMatch =
       filters.difficulty === "all" ||
-      problem.difficultylevel.toLowerCase() === filters.difficulty.toLowerCase();
+      problem.difficultylevel.toLowerCase() ===
+        filters.difficulty.toLowerCase();
 
     const tagMatch = filters.tag === "all" || problem.tags === filters.tag;
 
@@ -268,7 +269,9 @@ function HomePage() {
                         {solved ? (
                           <span className="text-success text-xl">✔</span>
                         ) : (
-                          <span className="text-base-content/30 text-xl">○</span>
+                          <span className="text-base-content/30 text-xl">
+                            ○
+                          </span>
                         )}
                       </td>
 
@@ -276,9 +279,9 @@ function HomePage() {
 
                       <td>
                         <Link to={`/problem/${problem._id}`}>
-                        <div className="font-medium hover:text-primary transition">
-                          {problem.title}
-                        </div>
+                          <div className="font-medium hover:text-primary transition">
+                            {problem.title}
+                          </div>
                         </Link>
                       </td>
 
@@ -290,7 +293,8 @@ function HomePage() {
                                         ${
                                           problem.difficultylevel === "easy"
                                             ? "badge-success"
-                                            : problem.difficultylevel === "medium"
+                                            : problem.difficultylevel ===
+                                                "medium"
                                               ? "badge-warning"
                                               : "badge-error"
                                         }`}
@@ -310,7 +314,9 @@ function HomePage() {
                               </span>
                             ))
                           ) : (
-                            <span className="badge badge-outline">{problem.tags}</span>
+                            <span className="badge badge-outline">
+                              {problem.tags}
+                            </span>
                           )}
                         </div>
                       </td>
@@ -320,7 +326,9 @@ function HomePage() {
               ) : (
                 <tr>
                   <td colSpan="4" className="text-center py-10 text-gray-500">
-                    {isSearching ? "No matching problems found" : "No Problems Found"}
+                    {isSearching
+                      ? "No matching problems found"
+                      : "No Problems Found"}
                   </td>
                 </tr>
               )}

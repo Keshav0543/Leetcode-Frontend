@@ -2,10 +2,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect, useState } from "react";
-import { Link , useNavigate} from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Mail, Lock, LogIn } from "lucide-react";
-import { useSelector , useDispatch} from "react-redux";
-import {loginUser} from "../authSlice.js";
+import { useSelector, useDispatch } from "react-redux";
+import { loginUser } from "../authSlice.js";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 // Schema Validation
@@ -14,9 +14,8 @@ const LoginSchema = z.object({
   password: z.string().min(8, "Password is too weak..."),
 });
 
-
 function LoginPage() {
-  const [showPassword, setshowPassword]=useState(false);
+  const [showPassword, setshowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -25,15 +24,15 @@ function LoginPage() {
     resolver: zodResolver(LoginSchema),
   });
 
-  const dispatch=useDispatch();
-  const navigate=useNavigate();
-  const {isAuthenticate , loading}=useSelector((state)=>state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isAuthenticate, loading } = useSelector((state) => state.auth);
 
-  useEffect(()=>{
-    if(isAuthenticate)navigate("/");
-  },[isAuthenticate]);
+  useEffect(() => {
+    if (isAuthenticate) navigate("/");
+  }, [isAuthenticate]);
 
-  function onSubmit(data){
+  function onSubmit(data) {
     dispatch(loginUser(data));
   }
 
@@ -41,7 +40,6 @@ function LoginPage() {
     <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
       <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-base-300">
         <div className="card-body">
-
           {/* Login Icon */}
           <div className="flex justify-center mb-2">
             <div className="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center shadow-lg">
@@ -50,50 +48,33 @@ function LoginPage() {
           </div>
 
           {/* Heading */}
-          <h2 className="text-3xl font-bold text-center mb-2">
-            Welcome Back
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-2">Welcome Back</h2>
 
           <p className="text-center text-base-content/70 mb-6">
             Login to continue your coding journey 🚀
           </p>
 
           {/* Form */}
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Email */}
-            <div>
-              <label className="label">
-                <span className="label-text font-medium">Email</span>
-              </label>
+            <div className="relative">
+              <Mail
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/60 z-10 pointer-events-none"
+              />
 
-              <div className="relative">
-                <Mail
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/60"
-                />
-
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className={`input input-bordered w-full pl-11 ${
-                    errors.emailId ? "input-error" : ""
-                  }`}
-                  {...register("emailId")}
-                />
-              </div>
-
-              {errors.emailId && (
-                <p className="text-error text-sm mt-1">
-                  {errors.emailId.message}
-                </p>
-              )}
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className={`input input-bordered w-full pl-11 ${
+                  errors.emailId ? "input-error" : ""
+                }`}
+                {...register("emailId")}
+              />
             </div>
 
             {/* Password */}
-             <div>
+            <div>
               <label className="label">
                 <span className="label-text font-medium">Password</span>
               </label>
@@ -134,10 +115,7 @@ function LoginPage() {
                 Remember me
               </label>
 
-              <Link
-                to="/forgot-password"
-                className="link link-primary"
-              >
+              <Link to="/forgot-password" className="link link-primary">
                 Forgot Password?
               </Link>
             </div>
@@ -148,7 +126,7 @@ function LoginPage() {
               className="btn btn-primary w-full mt-2"
               disabled={loading}
             >
-             {loading? "wait": "Login"}
+              {loading ? "wait" : "Login"}
             </button>
           </form>
 
@@ -166,7 +144,6 @@ function LoginPage() {
               Register
             </Link>
           </p>
-
         </div>
       </div>
     </div>

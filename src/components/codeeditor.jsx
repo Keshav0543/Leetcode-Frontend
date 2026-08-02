@@ -2,7 +2,6 @@ import Editor from "@monaco-editor/react";
 import { MONACO_LANGUAGE } from "../components/languageMap.jsx";
  
 export default function CodeEditor({ language, value, onChange }) {
-  console.log(language);
   return (
     <Editor
       height="100%"
