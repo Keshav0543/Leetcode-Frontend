@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
-import { fetchProblemById, runCode, submitCode } from "../Api/problemApi.jsx";
+import { fetchProblemById, runCode, submitCode, GetSubmissionsDetails} from "../Api/problemApi.jsx";
 import { TO_SUBMISSION_LANGUAGE, LANGUAGE_LABEL } from "../components/languageMap.jsx";
 import ProblemDescription from "../components/ProblemDescription.jsx";
 import CodeEditor from "../components/codeeditor.jsx";
@@ -8,8 +8,6 @@ import TestCasePanel from "../components/testCasepanel.jsx";
 import ConsoleOutput from "../components/consoleOutput.jsx";
 import SubmissionTable from "../components/submissiontable.jsx";
 import axiosClient from "../utils/axiosClient.js";
-
-
 
 const DIFFICULTY_STYLE = {
   easy: { dot: "bg-emerald-400", text: "text-emerald-400", ring: "ring-emerald-400/30" },
@@ -43,6 +41,85 @@ const CheckIcon = () => (
   </svg>
 );
 
+// ---- verdict helpers ----
+const isAccepted = (result) => {
+  if (!result) return false;
+  const desc = (result.status?.description || result.status || "")
+    .toString()
+    .toLowerCase();
+  return desc.includes("accepted");
+};
+
+function SubmissionVerdict({ submitting, result, error }) {
+  if (submitting) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-10">
+        <span className="loading loading-dots loading-lg text-teal-400" />
+        <span className="cj-mono text-xs uppercase tracking-widest text-[#6B7686]">
+          Judging submission…
+        </span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 font-mono text-sm text-red-300">
+        <span className="text-red-400 font-semibold">✗ error:</span> {String(error)}
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <p className="cj-mono text-sm text-[#6B7686]">
+        // submit your solution to see the verdict here
+      </p>
+    );
+  }
+
+  const accepted = isAccepted(result);
+  const verdictText = accepted
+    ? "Accepted"
+    : result.status?.description || result.status || "Wrong Answer";
+
+  return (
+    <div className="space-y-4">
+      <div
+        className={`cj-mono text-2xl font-bold ${
+          accepted ? "text-emerald-400" : "text-red-400"
+        }`}
+      >
+        {verdictText}
+      </div>
+
+      <div className="flex gap-6 cj-mono text-xs text-[#6B7686]">
+        <div>
+          <div className="uppercase tracking-wider">Runtime</div>
+          <div className="text-sm text-[#E6EDF3] mt-1">
+            {result.time != null ? `${result.time} ms` : "—"}
+          </div>
+        </div>
+        <div>
+          <div className="uppercase tracking-wider">Memory</div>
+          <div className="text-sm text-[#E6EDF3] mt-1">
+            {result.memory != null ? `${result.memory} KB` : "—"}
+          </div>
+        </div>
+      </div>
+
+      {!accepted && result.stdout !== undefined && (
+        <div className="cj-mono text-xs text-[#6B7686]">
+          <div className="uppercase tracking-wider mb-1">Output</div>
+          <pre className="whitespace-pre-wrap rounded-md border border-[#1F2733] bg-[#10141C] p-3 text-[#E6EDF3]">
+            {result.stdout ?? "null"}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProblemPage() {
   const { problemId } = useParams();
 
@@ -61,6 +138,7 @@ function ProblemPage() {
   const [submitting, setSubmitting] = useState(false);
   const [runResult, setRunResult] = useState(null); // raw array from RunCode
   const [submitResult, setSubmitResult] = useState(null);
+  const [pastsubmit, setpastsubmit] =useState([]);
   const [actionError, setActionError] = useState("");
 
   useEffect(() => {
@@ -95,22 +173,47 @@ function ProblemPage() {
   }, [problemId]);
 
   useEffect(() => {
-    let cancelled=false;
+    let cancelled = false;
     const fetchSolvedproblem = async () => {
       try {
         const result = await axiosClient.get("/user/ProblemSolvedByUser");
-        if(cancelled)return;
+        if (cancelled) return;
         const ans = result.data.some((k) => k._id === problemId);
         setsubmitted(ans);
       } catch (error) {
-        if(!cancelled)console.log("Error: ", error);
+        if (!cancelled) console.log("Error: ", error);
       }
     };
-    if(problemId)fetchSolvedproblem();
+    if (problemId) fetchSolvedproblem();
+    return () => {
+      cancelled = true;
+    };
+  }, [submitResult, problemId]);
+
+  useEffect(()=>{
+    let cancelled=false;
+    async function SubmittedData(){
+      try{
+        setLoading(true);
+        setLoadError("");
+        const {data}=await GetSubmissionsDetails(problemId);
+        if(cancelled)return;
+        console.log(data);
+        setpastsubmit(data);
+      }
+      catch(err){
+        if (!cancelled) setLoadError(err?.response?.data || err.message);
+      }
+      finally{
+        if(!cancelled)setLoading(false);
+      }
+    }
+
+    if(problemId)SubmittedData();
     return ()=>{
       cancelled=true;
-    };
-  }, [submitResult,problemId]);
+    }
+  },[problemId]);
 
   const code = codeByLanguage[language] ?? "";
   const setCode = (value) =>
@@ -147,14 +250,14 @@ function ProblemPage() {
     setActionError("");
     setSubmitResult(null);
     setBottomTab("result");
+    setLeftTab("verdict");
     try {
-      const {data}=await submitCode(problemId, buildPayload());
-      // SubmitCode currently responds with the plain string "Submitted_Result..."
-      // rather than the saved doc, so we can't show verdict/runtime here yet.
-      // Once you return the saved SubmissionS doc from the controller, swap
-      // this to read verdict/runtime/memory/testCasesPassed straight off it.
+      const { data } = await submitCode(problemId, buildPayload());
+    console.log("submitResult:", data);         
+    console.log("status value:", data.status); 
       setSubmitResult(data);
-      setLeftTab("submissions");
+      const {data:history}=await GetSubmissionsDetails(problemId);
+      setpastsubmit(history);
     } catch (err) {
       setActionError(err?.response?.data || err.message);
     } finally {
@@ -167,6 +270,25 @@ function ProblemPage() {
     text: "text-slate-400",
     ring: "ring-slate-400/30",
   };
+
+  // dynamic left tab list — verdict tab only appears once user submits
+  const leftTabs = [
+    { key: "description", label: "Description" },
+    { key: "submissions", label: "Submissions" },
+    { key: "Editorial", label: "Editorial" },
+  ];
+
+  if (submitting || submitResult) {
+    leftTabs.push({
+      key: "verdict",
+      label: submitting
+        ? "Judging…"
+        : isAccepted(submitResult)
+        ? "Accepted"
+        : submitResult?.status?.description || submitResult?.status || "Wrong Answer",
+      accepted: !submitting && isAccepted(submitResult),
+    });
+  }
 
   if (loading) {
     return (
@@ -215,6 +337,14 @@ function ProblemPage() {
           background: #2DD4BF;
           box-shadow: 0 0 8px rgba(45,212,191,0.6);
         }
+        .cj-tab[data-active="true"][data-accepted="true"]::after {
+          background: #34D399;
+          box-shadow: 0 0 8px rgba(52,211,153,0.6);
+        }
+        .cj-tab[data-active="true"][data-accepted="false"]::after {
+          background: #F87171;
+          box-shadow: 0 0 8px rgba(248,113,113,0.6);
+        }
         .cj-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .cj-scroll::-webkit-scrollbar-track { background: transparent; }
         .cj-scroll::-webkit-scrollbar-thumb { background: #1F2733; border-radius: 8px; }
@@ -257,18 +387,19 @@ function ProblemPage() {
         {/* Left panel */}
         <div className="w-[42%] min-w-[340px] flex flex-col border-r border-[#1F2733] bg-[#0D1117]">
           <div className="flex items-center gap-1 px-3 pt-2 border-b border-[#1F2733]">
-            {[
-              { key: "description", label: "Description" },
-              { key: "submissions", label: "Submissions" },
-              { key: "Editorial", label: "Editorial" },
-            ].map((t) => (
+            {leftTabs.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 data-active={leftTab === t.key}
+                data-accepted={t.key === "verdict" ? String(!!t.accepted) : undefined}
                 onClick={() => setLeftTab(t.key)}
                 className={`cj-tab cj-mono px-3 py-2 text-[12px] uppercase tracking-wide rounded-t-md transition-colors ${
-                  leftTab === t.key
+                  t.key === "verdict"
+                    ? t.accepted
+                      ? "text-emerald-400"
+                      : "text-red-400"
+                    : leftTab === t.key
                     ? "text-teal-300"
                     : "text-[#6B7686] hover:text-[#B7C2CE]"
                 }`}
@@ -279,11 +410,20 @@ function ProblemPage() {
           </div>
           <div className="cj-scroll flex-1 overflow-y-auto p-5">
             {leftTab === "description" && <ProblemDescription problem={problem} />}
-            {leftTab === "submissions" && <SubmissionTable problemId={problemId} />}
+            {leftTab === "submissions" && (
+              <SubmissionTable submitResult={pastsubmit} />
+            )}
             {leftTab === "Editorial" && (
               <p className="cj-mono text-sm text-[#6B7686]">
                 // editorial not written yet
               </p>
+            )}
+            {leftTab === "verdict" && (
+              <SubmissionVerdict
+                submitting={submitting}
+                result={submitResult}
+                error={actionError}
+              />
             )}
           </div>
         </div>

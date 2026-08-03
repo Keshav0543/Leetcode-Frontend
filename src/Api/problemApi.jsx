@@ -9,6 +9,10 @@ export const runCode = (problemId, { code, language }) =>
 export const submitCode = (problemId, { code, language }) =>
   axiosClient.post(`/user/submit/${problemId}`, { code, language });
 
+export const GetSubmissionsDetails= (problemId)=>{
+  return axiosClient.get(`/user/submission/${problemId}`);
+}
+
 // Stub — you don't have a "get my submissions for a problem" controller yet.
 // Add something like:
 //   submitRouter.get('/:problemId', userMiddleware, GetSubmissions)

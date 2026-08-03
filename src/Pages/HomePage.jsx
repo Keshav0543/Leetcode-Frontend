@@ -13,7 +13,6 @@ function HomePage() {
   const [resultQuery, setresultQuery] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  console.log(userProb);
   const [filters, setfilters] = useState({
     difficulty: "all",
     tag: "all",
