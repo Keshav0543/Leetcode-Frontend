@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Search, Code2, UserCircle2, X } from "lucide-react";
 import { logoutUser } from "../authSlice.js";
 import debounce from "lodash/debounce";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 function HomePage() {
   const [Allproblem, setAllproblem] = useState([]);
@@ -12,6 +12,9 @@ function HomePage() {
   const [query, setquery] = useState("");
   const [resultQuery, setresultQuery] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const navigate = useNavigate();
 
   const [filters, setfilters] = useState({
     difficulty: "all",
@@ -23,21 +26,44 @@ function HomePage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchdata = async () => {
       try {
+        setLoading(true);
+        setLoadError("");
         const [problemRes, userProbres] = await Promise.all([
           axiosClient.get("/user/GetAllProblem"),
           axiosClient.get("/user/ProblemSolvedByUser"),
         ]);
 
-        setAllproblem(problemRes.data);
-        setuserProb(userProbres.data);
-      } catch (error) {
-        console.log(error);
+        if (!cancelled) {
+          setAllproblem(problemRes.data);
+          setuserProb(userProbres.data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(err?.response?.data?.message || err.message);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchdata();
+
+    // Refetch when page is restored from bfcache (browser back/forward)
+    function handlePageShow(event) {
+      if (event.persisted) {
+        fetchdata();
+      }
+    }
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pageshow", handlePageShow);
+    };
   }, []);
 
   const filteredProblems = Allproblem.filter((problem) => {
@@ -100,7 +126,6 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-base-200">
       {/* Navbar */}
-
       <div className="navbar bg-base-100 shadow-lg px-8">
         <div className="flex-1">
           <a className="text-2xl font-bold flex items-center gap-2">
@@ -111,7 +136,6 @@ function HomePage() {
 
         <div className="flex gap-4 items-center">
           <button className="btn btn-primary">Contests</button>
-
           <button className="btn btn-ghost">Problems</button>
 
           <div className="dropdown dropdown-end">
@@ -126,11 +150,14 @@ function HomePage() {
               <li>
                 <a>{user?.firstName}</a>
               </li>
-
               <li>
                 <a>Profile</a>
               </li>
-
+               {user?.role === "admin" && (
+                <li>
+                  <button onClick={() => navigate("/admin")}>Admin</button>
+                </li>
+              )}
               <li>
                 <a onClick={logoutFunction}>Logout</a>
               </li>
@@ -140,12 +167,10 @@ function HomePage() {
       </div>
 
       {/* Search + Filters */}
-
       <div className="max-w-7xl mx-auto mt-8">
         <div className="bg-base-100 rounded-xl shadow-md p-6">
           <div className="flex flex-wrap justify-between gap-4">
             {/* Search bar */}
-
             <div className="form-control w-full sm:max-w-xs">
               <div className="relative">
                 <Search
@@ -172,17 +197,13 @@ function HomePage() {
             </div>
 
             {/* Filters */}
-
             <div className="flex flex-wrap justify-end gap-4">
               <select
                 className="select select-bordered"
                 value={filters.difficulty}
                 disabled={isSearching}
                 onChange={(e) =>
-                  setfilters({
-                    ...filters,
-                    difficulty: e.target.value,
-                  })
+                  setfilters({ ...filters, difficulty: e.target.value })
                 }
               >
                 <option value="all">Difficulty</option>
@@ -196,10 +217,7 @@ function HomePage() {
                 value={filters.tag}
                 disabled={isSearching}
                 onChange={(e) =>
-                  setfilters({
-                    ...filters,
-                    tag: e.target.value,
-                  })
+                  setfilters({ ...filters, tag: e.target.value })
                 }
               >
                 <option value="all">Tags</option>
@@ -215,10 +233,7 @@ function HomePage() {
                 value={filters.status}
                 disabled={isSearching}
                 onChange={(e) =>
-                  setfilters({
-                    ...filters,
-                    status: e.target.value,
-                  })
+                  setfilters({ ...filters, status: e.target.value })
                 }
               >
                 <option value="all">Status</option>
@@ -239,31 +254,37 @@ function HomePage() {
       </div>
 
       {/* Problem List */}
-
       <div className="max-w-7xl mx-auto mt-6 mb-10">
         <div className="overflow-x-auto rounded-xl bg-base-100 shadow-md">
           <table className="table table-zebra">
             <thead>
               <tr className="text-base">
                 <th className="w-16 text-center">Status</th>
-
                 <th>Problem</th>
-
                 <th className="text-center">Difficulty</th>
-
                 <th className="text-center">Tags</th>
               </tr>
             </thead>
 
             <tbody>
-              {displayedProblems.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-16">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                  </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-10 text-error">
+                    {loadError}
+                  </td>
+                </tr>
+              ) : displayedProblems.length > 0 ? (
                 displayedProblems.map((problem) => {
                   const solved = userProb.some((sp) => sp._id === problem._id);
 
                   return (
                     <tr key={problem._id} className="hover cursor-pointer">
-                      {/* Status */}
-
                       <td className="text-center">
                         {solved ? (
                           <span className="text-success text-xl">✔</span>
@@ -274,8 +295,6 @@ function HomePage() {
                         )}
                       </td>
 
-                      {/* Problem Title */}
-
                       <td>
                         <Link to={`/problem/${problem._id}`}>
                           <div className="font-medium hover:text-primary transition">
@@ -284,25 +303,19 @@ function HomePage() {
                         </Link>
                       </td>
 
-                      {/* Difficulty */}
-
                       <td className="text-center">
                         <span
-                          className={`badge
-                                        ${
-                                          problem.difficultylevel === "easy"
-                                            ? "badge-success"
-                                            : problem.difficultylevel ===
-                                                "medium"
-                                              ? "badge-warning"
-                                              : "badge-error"
-                                        }`}
+                          className={`badge ${
+                            problem.difficultylevel === "easy"
+                              ? "badge-success"
+                              : problem.difficultylevel === "medium"
+                                ? "badge-warning"
+                                : "badge-error"
+                          }`}
                         >
                           {problem.difficultylevel}
                         </span>
                       </td>
-
-                      {/* Tags */}
 
                       <td className="text-center">
                         <div className="flex flex-wrap justify-center gap-2">

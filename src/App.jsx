@@ -7,6 +7,10 @@ import RegisterPage from "./Pages/RegisterPage.jsx";
 import {authenticateUser} from "../src/authSlice.js";
 import { useDispatch, useSelector } from "react-redux";
 import ProblemPage from "../src/Pages/ProblemPage.jsx";
+import CreateProblem from "./Pages/CreateProb.jsx";
+import UpdateProblem from "./Pages/UpdateProb.jsx";
+import EditProblem from "./Pages/EditContent.jsx";
+import DeleteProblem from "./Pages/deletePage.jsx";
 
 function App(){
   const {isAuthenticate, loading, user}=useSelector((state)=>state.auth);
@@ -31,6 +35,10 @@ function App(){
         <Route path="/register" element={isAuthenticate?<Navigate to={"/"}/>:<RegisterPage></RegisterPage>}></Route>
         <Route path="/admin" element={isAuthenticate && user?.role==="admin"?<Admin/>:<Navigate to={"/"}/>}></Route>
         <Route path="/problem/:problemId" element={<ProblemPage/>}></Route>
+        <Route path="/admin/createProblem" element={<CreateProblem/>}></Route>
+        <Route path="/admin/updateProblem" element={<UpdateProblem/>}></Route>
+        <Route path="/admin/updateProblem/:id" element={<EditProblem/>}></Route>
+        <Route path="/admin/deleteProblem" element={<DeleteProblem/>}></Route>
       </Routes>
       </>
     )
