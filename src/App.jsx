@@ -11,6 +11,8 @@ import CreateProblem from "./Pages/CreateProb.jsx";
 import UpdateProblem from "./Pages/UpdateProb.jsx";
 import EditProblem from "./Pages/EditContent.jsx";
 import DeleteProblem from "./Pages/deletePage.jsx";
+import Forgotpass from "./Pages/ForgotPassword.jsx";
+import ResetPage from "./Pages/ResetPage.jsx";
 
 function App(){
   const {isAuthenticate, loading, user}=useSelector((state)=>state.auth);
@@ -39,6 +41,8 @@ function App(){
         <Route path="/admin/updateProblem" element={<UpdateProblem/>}></Route>
         <Route path="/admin/updateProblem/:id" element={<EditProblem/>}></Route>
         <Route path="/admin/deleteProblem" element={<DeleteProblem/>}></Route>
+        <Route path="/forgot-password" element={<Forgotpass/>}></Route>
+        <Route path="/reset-password" element={<ResetPage/>}></Route>
       </Routes>
       </>
     )
